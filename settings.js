@@ -57,4 +57,15 @@ doButton.addEventListener('click', function () {
       parseFloat(latitudeStep.value),
     ]
   }, '*');
+
+  showSuccessText();
 });
+
+function showSuccessText() {
+  let successText = document.querySelector('.success.message');
+  successText.classList.add("shown");
+
+  setTimeout(function () {
+    successText.classList.remove("shown");
+  }, 3000);
+}
