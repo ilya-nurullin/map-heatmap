@@ -34,6 +34,16 @@ formula.addEventListener('input', function () {
 });
 
 doButton.addEventListener('click', function () {
+  try {
+    eval("window.__f__ = (x1, x2) => " + JsFormula.value);
+    window.__f__(parseFloat(latitudeFrom.value), parseFloat(longitudeFrom.value));
+  } catch (e) {
+    if (e) {
+      alert("Ошибка в формуле для JS: "+e.message);
+      return;
+    }
+  }
+
   opener.postMessage({'event': 'updateHeatMap',
     params: [
       JsFormula.value,
