@@ -39,15 +39,22 @@
 <label><input type="radio" name="heatmapType" id="HMTypeSecond"> Вторая</label> Радиус точки (любое значение в км.)=<input type="number" id="HMTypeSecondRadius" value="750">
 </p>
 
+<p>Город <br>
+<label><input type="radio" name="city" value="ekat" checked>Екатеринбург</label> <br>
+<label><input type="radio" name="city" value="perm">Пермь</label> <br>
+<label><input type="radio" name="city" value="nizh">Нижний Новгород</label> <br>
+</p>
+
+
 <p>Границы тепловой карты</p>
 <p>Долгота
-    от <input type="number" id="longitudeFrom" value="60.50">
-    до <input type="number" id="longitudeTo" value="60.7">
+    от <input type="number" id="longitudeFrom">
+    до <input type="number" id="longitudeTo">
     с шагом <input type="number" step="0.001" id="longitudeStep" value="0.003"></p>
 
 <p>Широта
-    от <input type="number" id="latitudeFrom" value="56.77">
-    до <input type="number" id="latitudeTo" value="56.90">
+    от <input type="number" id="latitudeFrom">
+    до <input type="number" id="latitudeTo">
     с шагом <input type="number" step="0.001" id="latitudeStep" value="0.002"></p>
 
 <button style="padding: 1rem" id="doButton">Построить</button>

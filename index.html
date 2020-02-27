@@ -38,7 +38,7 @@
       .setView([
         56.8519,
         60.6122
-      ], 12);
+      ], 11);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -48,6 +48,11 @@
   let heatLayer = null;
 
   let dataPoints = [];
+  let cityCenterCoords = {
+      'ekat': {lat: 56.8519, lng: 60.6122},
+      'perm': {lat: 58.01, lng: 56.25},
+      'nizh': {lat: 56.32867, lng: 44},
+  };
 
 // (Math.tanh(-0.146545736131038 * Math.tanh(57.8391127429404 * (0.548993331515251 * X1 - 32.1434018618834) + 20.9983885528493 * (0.655215970404418 * X2 - 36.313155313229) + 2.8417818552084) - 0.185714385899375 * Math.tanh(3.80060029053366 * (0.548993331515251 * X1 - 32.1434018618834) - 9.58522275102171 * (0.655215970404418 * X2 - 36.313155313229) + 4.65779175733936) + 0.264835397021346 * Math.tanh(297.499853526285 * (0.548993331515251 * X1 - 32.1434018618834) - 155.323757346319 * (0.655215970404418 * X2 - 36.313155313229) + 2.19922943677836) - 0.337840331592217) + 1.0746887966805) / 2.76625173E-07;
 
@@ -55,7 +60,9 @@
   window.addEventListener("message", receiveMessage, false);
 
   function updateHeatMap(params) {
-    let [JsFormula, headMapType, headMapRadius, longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep] = params;
+    let [JsFormula, headMapType, headMapRadius, longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep, cityName] = params;
+
+    map.panTo(cityCenterCoords[cityName]);
 
     resetHeatMap();
 
