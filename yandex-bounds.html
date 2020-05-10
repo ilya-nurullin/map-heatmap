@@ -11,17 +11,24 @@
             padding: 0;
         }
 
-        #settingsLabel {
+        #myLinks {
             position: fixed;
             right: 0;
             top: 0;
             background: rgba(255, 255, 255, 0.7);;
-            display: inline-block;
+            display: inline-flex;
             padding: 2px;
-            color: #0078A8;;
+            color: #0078A8;
             z-index: 9999999999999;
             cursor: pointer;
         }
+
+        #myLinks > * {
+            margin-right: 1rem;
+            color: #0078A8;
+            text-decoration: none;
+        }
+
     </style>
     <script src="https://api-maps.yandex.ru/2.1/?apikey=5c108f36-3345-4799-9239-732d3482395e&lang=ru_RU"
             type="text/javascript"></script>
@@ -30,7 +37,10 @@
 <body>
 
 <div id="map"></div>
-<div id="settingsLabel">Настройки</div>
+<div id="myLinks">
+    <a href="index.html">Точная тепловая карта</a>
+    <div id="settingsLabel">Настройки</div>
+</div>
 
 
 <script type="text/javascript">
