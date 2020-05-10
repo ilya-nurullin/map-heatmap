@@ -49,11 +49,7 @@
   ymaps.ready(init);
 
 
-  let cityCenterCoords = {
-      'ekat': {lat: 56.8519, lng: 60.6122},
-      'perm': {lat: 58.01, lng: 56.25},
-      'nizh': {lat: 56.32867, lng: 44},
-  };
+
 
   function init() {
     // Создание карты.
@@ -70,7 +66,7 @@
     });
 
     ymaps.modules.require(['Heatmap'], function (Heatmap) {
-      let JsFormula, headMapType, headMapRadius, longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo,
+      let JsFormula, longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo,
           latitudeStep, cityName;
 
       let data = {
@@ -137,10 +133,11 @@
       }
 
       function updateHeatMap(params) {
-        [JsFormula, headMapType, headMapRadius, longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep, cityName] = params;
+        let cityCenterCoords;
 
-        let cityCenterCoord = cityCenterCoords[cityName];
-        myMap.panTo([cityCenterCoord.lat, cityCenterCoord.lng]);
+        [JsFormula, cityCenterCoords, longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep, cityName] = params;
+
+        myMap.panTo(cityCenterCoords);
         eval("window.f = (x1, x2) => " + JsFormula);
 
         heatmap.setData(getFeatureArray(longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep));

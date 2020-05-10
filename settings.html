@@ -33,18 +33,13 @@
 <p>JS Формула <br>
     <textarea id="formulaJs" rows="5" style="width: 80%"></textarea>
 </p>
-<div id="selectHeatmapWrapper">
-    <p>Библиотека тепловой карты <br>
-    <label><input type="radio" name="heatmapType" id="HMTypeFirst" checked> Первая</label> Радиус точка (от 1 до 100)=<input type="number" id="HMTypeFirstRadius" min="1" max="100" value="75">
-    <br>
-    <label><input type="radio" name="heatmapType" id="HMTypeSecond"> Вторая</label> Радиус точки (любое значение в км.)=<input type="number" id="HMTypeSecondRadius" value="750">
-    </p>
-</div>
 
 <p>Город <br>
-<label><input type="radio" name="city" value="ekat" checked>Екатеринбург</label> <br>
-<label><input type="radio" name="city" value="perm">Пермь</label> <br>
+<label><input type="radio" name="city" value="ekat">Екатеринбург</label> <br>
+<label><input type="radio" name="city" value="perm" checked>Пермь</label> <br>
 <label><input type="radio" name="city" value="nizh">Нижний Новгород</label> <br>
+    широта <input type="number" id="latitude" step="0.001">
+    долгота <input type="number" id="longitude" step="0.001">
 </p>
 
 
@@ -52,12 +47,12 @@
 <p>Долгота
     от <input type="number" id="longitudeFrom">
     до <input type="number" id="longitudeTo">
-    с шагом <input type="number" step="0.001" id="longitudeStep" value="0.003"></p>
+    с шагом <input type="number" step="0.001" id="longitudeStep" value="0.002"></p>
 
 <p>Широта
     от <input type="number" id="latitudeFrom">
     до <input type="number" id="latitudeTo">
-    с шагом <input type="number" step="0.001" id="latitudeStep" value="0.002"></p>
+    с шагом <input type="number" step="0.001" id="latitudeStep" value="0.001"></p>
 
 <button style="padding: 1rem" id="doButton">Построить</button>
 <span class="success message">Применено</span>
@@ -66,33 +61,20 @@
 <script>
     let $ = (id) => document.getElementById(id);
 
-    if (location.hash === "#hideSelectMaps") {
-      $('selectHeatmapWrapper').style.display = 'none';
-      $('longitudeStep').value = '0.002';
-      $('latitudeStep').value = '0.001';
-    }
+    let cityCenterCoords = {
+      'ekat': {lat: 56.8519, lon: 60.6122},
+      'perm': {lat: 58.01, lon: 56.25},
+      'nizh': {lat: 56.32867, lon: 44},
+    };
 
     let formula = $('formula');
     let JsFormula = $('formulaJs');
 
     let cityProps = {
-      // [lonFrom, lonTo, latFrom, latTo]
+      /* [lonFrom, lonTo, latFrom, latTo] */
       'ekat': [60.50, 60.8, 56.77, 56.93],
       'perm': [56, 56.4, 57.9, 58.1],
       'nizh': [43.8, 44.2, 56.2, 56.4],
-    };
-
-    let headMapType = () => {
-      if ($('HMTypeFirst').checked)
-        return 1;
-      if ($('HMTypeSecond').checked)
-        return 2;
-    };
-    let headMapRadius = () => {
-      if (headMapType() === 1)
-        return parseInt($('HMTypeFirstRadius').value);
-      if (headMapType() === 2)
-        return parseInt($('HMTypeSecondRadius').value);
     };
 
     let longitudeFrom = $('longitudeFrom');
@@ -103,6 +85,9 @@
     let latitudeTo = $('latitudeTo');
     let latitudeStep = $('latitudeStep');
 
+    let latitude = $('latitude');
+    let longitude = $('longitude');
+
     let doButton = $('doButton');
 
     function updateHeatmapBoundsSettings(cityName) {
@@ -111,9 +96,7 @@
       longitudeTo.value = lonTo;
       latitudeFrom.value = latFrom;
       latitudeTo.value = latTo;
-    };
-
-    updateHeatmapBoundsSettings('ekat');
+    }
 
     document.querySelectorAll('[name="city"]').forEach(function (radio) {
       radio.addEventListener('click', function () {
@@ -127,6 +110,18 @@
           .replace(/tanh/g, 'Math.tanh')
           .replace(/,/g, '.');
     });
+
+    document.querySelectorAll('input[name=city]').forEach((input) => {
+      input.addEventListener('input', function () {
+        setCoordsFromCityName(this.value);
+      })
+    });
+
+    function setCoordsFromCityName(name) {
+      let coords = cityCenterCoords[name];
+      latitude.value = coords.lat;
+      longitude.value = coords.lon;
+    }
 
     doButton.addEventListener('click', function () {
       try {
@@ -142,8 +137,7 @@
       opener.postMessage({'event': 'updateHeatMap',
         params: [
           JsFormula.value,
-          headMapType(),
-          headMapRadius(),
+          [parseFloat(latitude.value), parseFloat(longitude.value)],
           parseFloat(longitudeFrom.value),
           parseFloat(longitudeTo.value),
           parseFloat(longitudeStep.value),
@@ -165,6 +159,10 @@
         successText.classList.remove("shown");
       }, 3000);
     }
+
+    let selectedCity = document.querySelector('[name="city"]:checked').value;
+    setCoordsFromCityName(selectedCity);
+    updateHeatmapBoundsSettings(selectedCity);
 </script>
 </body>
 </html>
