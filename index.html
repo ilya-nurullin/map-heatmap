@@ -2,12 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Тепловая карта</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
-    <script src="./webgl-heatmap.js"></script>
-     <script src="./leaflet-webgl-heatmap.min.js"></script>
-    <script src="./leaflet-heat.js"></script>
+    <title>Тепловая карта от Yandex</title>
     <style>
         html, body, #map {
             width: 100%;
@@ -28,108 +23,152 @@
             cursor: pointer;
         }
     </style>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=5c108f36-3345-4799-9239-732d3482395e&lang=ru_RU"
+            type="text/javascript"></script>
+    <script src="https://yastatic.net/s3/mapsapi-jslibs/heatmap/0.0.1/heatmap.min.js" type="text/javascript"></script>
 </head>
 <body>
+
 <div id="map"></div>
 <div id="settingsLabel">Настройки</div>
 
-<script>
-  let map = L.map('map')
-      .setView([
-        56.8519,
-        60.6122
-      ], 11);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  }).addTo(map);
+<script type="text/javascript">
+  // Функция ymaps.ready() будет вызвана, когда
+  // загрузятся все компоненты API, а также когда будет готово DOM-дерево.
+  ymaps.ready(init);
 
-  let resetHeatMap = () => null;
-  let heatLayer = null;
 
-  let dataPoints = [];
   let cityCenterCoords = {
       'ekat': {lat: 56.8519, lng: 60.6122},
       'perm': {lat: 58.01, lng: 56.25},
       'nizh': {lat: 56.32867, lng: 44},
   };
 
-// (Math.tanh(-0.146545736131038 * Math.tanh(57.8391127429404 * (0.548993331515251 * X1 - 32.1434018618834) + 20.9983885528493 * (0.655215970404418 * X2 - 36.313155313229) + 2.8417818552084) - 0.185714385899375 * Math.tanh(3.80060029053366 * (0.548993331515251 * X1 - 32.1434018618834) - 9.58522275102171 * (0.655215970404418 * X2 - 36.313155313229) + 4.65779175733936) + 0.264835397021346 * Math.tanh(297.499853526285 * (0.548993331515251 * X1 - 32.1434018618834) - 155.323757346319 * (0.655215970404418 * X2 - 36.313155313229) + 2.19922943677836) - 0.337840331592217) + 1.0746887966805) / 2.76625173E-07;
+  function init() {
+    // Создание карты.
+    let myMap = new ymaps.Map("map", {
+      // Координаты центра карты.
+      // Порядок по умолчанию: «широта, долгота».
+      // Чтобы не определять координаты центра карты вручную,
+      // воспользуйтесь инструментом Определение координат.
+      center: [58.01, 56.25],
+      // Уровень масштабирования. Допустимые значения:
+      // от 0 (весь мир) до 19.
+      zoom: 12
+    });
 
+    ymaps.modules.require(['Heatmap'], function (Heatmap) {
+      let JsFormula, headMapType, headMapRadius, longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo,
+          latitudeStep, cityName;
 
-  window.addEventListener("message", receiveMessage, false);
+      let data = {
+            type: 'FeatureCollection',
+            features: []
+          },
+          heatmap = new Heatmap(data);
 
-  function updateHeatMap(params) {
-    let [JsFormula, headMapType, headMapRadius, longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep, cityName] = params;
+      heatmap.setMap(myMap);
 
-    map.panTo(cityCenterCoords[cityName]);
+      function getFeatureArray(longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep) {
+        return countDataPoints(longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep)
+            .map((arr, index) => {
+              return {
+                id: 'id' + index,
+                type: 'Feature',
+                geometry: {
+                  type: 'Point',
+                  coordinates: [arr[0], arr[1]]
+                },
+                properties: {
+                  weight: arr[2]
+                }
+              };
+            });
+      }
 
-    resetHeatMap();
+      function countDataPoints(longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep) {
+        let dataPoints = [];
 
-    eval("window.f = (x1, x2) => "+JsFormula);
+        let max = 0;
+        let min = Number.MAX_SAFE_INTEGER;
+        for (let lat = latitudeFrom; lat <= latitudeTo; lat += latitudeStep) {
+          for (let lon = longitudeFrom; lon <= longitudeTo; lon += longitudeStep) {
+            let _f = f(lat, lon);
 
-    countDataPoints(longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep);
+            dataPoints.push([
+              lat,
+              lon,
+              _f
+            ]);
 
-    if (headMapType === 1)
-    {
-      heatLayer = L.heatLayer(dataPoints, {
-        radius: headMapRadius,
-        blur: 0
-      }).addTo(map);
-    }
-    else {
-      heatLayer = new L.webGLHeatmap({
-          size: headMapRadius,
-          opacity: 0.9
-      });
-      heatLayer.setData(dataPoints);
-      map.addLayer(heatLayer);
-    }
+            if (_f > max)
+              max = _f;
+            if (_f < min)
+              min = _f;
+          }
+        }
 
-    resetHeatMap = () => map.removeLayer(heatLayer);
-  }
+        let s = max - min;
 
-  function countDataPoints(longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep) {
-    dataPoints = [];
-
-    let max = 0;
-    let min = Number.MAX_SAFE_INTEGER;
-    for (let lat = latitudeFrom; lat <= latitudeTo; lat += latitudeStep) {
-      for (let lon = longitudeFrom; lon <= longitudeTo; lon += longitudeStep) {
-        let _f = f(lat, lon);
-
-        dataPoints.push([
-          lat,
-          lon,
-          _f
+        dataPoints = dataPoints.map((e) => [
+          e[0],
+          e[1],
+          (e[2] - min) / s
         ]);
 
-        if (_f > max)
-          max = _f;
-        if (_f < min)
-          min = _f;
+        return dataPoints
       }
-    }
 
-    let s = max - min;
+      function updateHeatMap(params) {
+        [JsFormula, headMapType, headMapRadius, longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep, cityName] = params;
 
-    dataPoints = dataPoints.map((e) => [
-      e[0],
-      e[1],
-      (e[2] - min) / s
-    ]);
-  }
+        let cityCenterCoord = cityCenterCoords[cityName];
+        myMap.panTo([cityCenterCoord.lat, cityCenterCoord.lng]);
+        eval("window.f = (x1, x2) => " + JsFormula);
 
-  function receiveMessage(event) {
-    console.log(event);
-    let eName = event.data.event;
+        heatmap.setData(getFeatureArray(longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep));
+      }
 
-    if (eName === "updateHeatMap")
-      updateHeatMap(event.data.params);
+      window.addEventListener("message", receiveMessage, false);
+
+      function receiveMessage(event) {
+        console.log(event);
+        let eName = event.data.event;
+
+        if (eName === "updateHeatMap")
+          updateHeatMap(event.data.params);
+      }
+
+      myMap.events.add('dblclick', function (e) {
+        e.preventDefault();
+        if (JsFormula) {
+          let coords = e.get('coords');
+          let lat = coords[0];
+          let lon = coords[1];
+
+          if (Math.abs(longitudeFrom - lon) > Math.abs(longitudeTo - lon)){
+            longitudeTo = lon
+          }
+          else {
+            longitudeFrom = lon
+          }
+
+          if (Math.abs(latitudeFrom - lat) > Math.abs(latitudeTo - lat)){
+            latitudeTo = lat;
+          }
+          else {
+            latitudeFrom = lat;
+          }
+
+          heatmap.setData(getFeatureArray(longitudeFrom, longitudeTo, longitudeStep, latitudeFrom, latitudeTo, latitudeStep));
+        }
+      });
+    });
   }
 
   document.getElementById("settingsLabel").addEventListener('click', function () {
-    window.open("./settings.html");
+    window.open("./settings.html#hideSelectMaps");
   });
 </script>
 </body>

@@ -33,11 +33,13 @@
 <p>JS Формула <br>
     <textarea id="formulaJs" rows="5" style="width: 80%"></textarea>
 </p>
-<p>Библиотека тепловой карты <br>
-<label><input type="radio" name="heatmapType" id="HMTypeFirst" checked> Первая</label> Радиус точка (от 1 до 100)=<input type="number" id="HMTypeFirstRadius" min="1" max="100" value="75">
-<br>
-<label><input type="radio" name="heatmapType" id="HMTypeSecond"> Вторая</label> Радиус точки (любое значение в км.)=<input type="number" id="HMTypeSecondRadius" value="750">
-</p>
+<div id="selectHeatmapWrapper">
+    <p>Библиотека тепловой карты <br>
+    <label><input type="radio" name="heatmapType" id="HMTypeFirst" checked> Первая</label> Радиус точка (от 1 до 100)=<input type="number" id="HMTypeFirstRadius" min="1" max="100" value="75">
+    <br>
+    <label><input type="radio" name="heatmapType" id="HMTypeSecond"> Вторая</label> Радиус точки (любое значение в км.)=<input type="number" id="HMTypeSecondRadius" value="750">
+    </p>
+</div>
 
 <p>Город <br>
 <label><input type="radio" name="city" value="ekat" checked>Екатеринбург</label> <br>
@@ -63,6 +65,12 @@
 
 <script>
     let $ = (id) => document.getElementById(id);
+
+    if (location.hash === "#hideSelectMaps") {
+      $('selectHeatmapWrapper').style.display = 'none';
+      $('longitudeStep').value = '0.002';
+      $('latitudeStep').value = '0.001';
+    }
 
     let formula = $('formula');
     let JsFormula = $('formulaJs');
